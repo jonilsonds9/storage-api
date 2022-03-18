@@ -1,0 +1,76 @@
+import {
+  BadRequestException,
+  Controller,
+  Delete,
+  Get,
+  HttpStatus,
+  Param,
+  Put,
+  Res,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FilesService } from './files.service';
+import { FileData } from './file-data';
+import { FileDataInterceptor } from './file-data.interceptor';
+import { Response } from 'express';
+import { contentType } from 'mime-types';
+import { StorageConfig } from 'src/config/storage';
+import { FileInterceptor } from '@nestjs/platform-express';
+
+@Controller()
+export class FilesController {
+  constructor(private readonly filesService: FilesService) {}
+
+  @Get()
+  home(): object {
+    return { message: 'Storage API' };
+  }
+
+  @Get('/:folder/:fileName')
+  download(
+    @Param() fileData: FileData,
+    @Res({ passthrough: true }) response: Response,
+  ): StreamableFile {
+    const file = this.filesService.download(fileData);
+    const contentTypeFile = contentType(fileData.fileName);
+    response.set({
+      'Content-Type': contentTypeFile,
+    });
+    return new StreamableFile(file);
+  }
+
+  @Put('/:folder/:fileName')
+  @UseInterceptors(
+    FileDataInterceptor,
+    FileInterceptor('data', {
+      storage: StorageConfig.getStorage(),
+    }),
+  )
+  upload(
+    @Param() fileData: FileData,
+    @Res() response: Response,
+    @UploadedFile() file: Express.Multer.File,
+  ): object {
+    if (file === undefined)
+      throw new BadRequestException(
+        "Campo arquivo com nome 'data' é obrigatório",
+      );
+
+    // this.filesService.upload(fileData);
+
+    return response
+      .status(HttpStatus.CREATED)
+      .send({ HttpCode: 201, Message: 'File uploaded.' });
+  }
+
+  @Delete('/:folder/:fileName')
+  delete(@Param() fileData: FileData, @Res() response: Response): object {
+    this.filesService.delete(fileData);
+
+    return response
+      .status(HttpStatus.OK)
+      .send({ HttpCode: 200, Message: 'Object was successfully deleted' });
+  }
+}
