@@ -1,10 +1,12 @@
+# Storage API
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
 </p>
 
 ## Descrição
 
-Este é um projeto de um API de armezenamento (Storage API) feito usando o 
+Este é um projeto de uma API de armezenamento (Storage API) feito usando o 
 [Nest](https://github.com/nestjs/nest) que é um framework TypeScript.
 
 ## Instalação
