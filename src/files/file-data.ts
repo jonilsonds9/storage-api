@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class FileData {
   @IsNotEmpty()
@@ -13,4 +13,9 @@ export class FileData {
     this.folder = folder;
     this.fileName = fileName;
   }
+
+  // public static toModel(fileData: FileData): File {
+  //   const file = new File(fileData.folder, fileData.fileName);
+  //   return file;
+  // }
 }

@@ -4,27 +4,31 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FileData } from './file-data';
-import {
-  createReadStream,
-  createWriteStream,
-  existsSync,
-  mkdirSync,
-  ReadStream,
-  unlinkSync,
-} from 'fs';
+import { createReadStream, existsSync, ReadStream, unlinkSync } from 'fs';
 import { StorageConfig } from '../config/storage';
-import * as Buffer from 'buffer';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { File } from '../entities/file.entity';
 
 @Injectable()
 export class FilesService {
-  upload(fileData: FileData): void {
-    const fullPathWithFileName = FilesService.createFolderTree(fileData);
+  constructor(
+    @InjectRepository(File)
+    private readonly filesRepository: Repository<File>,
+  ) {}
+
+  async upload(fileData: FileData): Promise<void> {
+    await this.filesRepository.save({ ...fileData });
   }
 
-  delete(fileData: FileData): void {
+  async delete(fileData: FileData): Promise<void> {
     const fullPathWithFileName = this.getFullPathIfFileExists(fileData);
 
     try {
+      const file = await this.filesRepository.findOneOrFail({
+        where: { folder: fileData.folder, fileName: fileData.fileName },
+      });
+      if (file != undefined) await this.filesRepository.delete(file.id);
       unlinkSync(fullPathWithFileName);
     } catch (error) {
       throw new BadRequestException('Object delete failed');
@@ -45,13 +49,5 @@ export class FilesService {
     }
 
     return fullPathWithFileName;
-  }
-
-  private static createFolderTree(data: FileData): string {
-    const fullPath = StorageConfig.getFullPath(data.folder);
-
-    mkdirSync(fullPath, { recursive: true });
-
-    return `${fullPath}/${data.fileName}`;
   }
 }

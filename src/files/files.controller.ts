@@ -48,17 +48,17 @@ export class FilesController {
       storage: StorageConfig.getStorage(),
     }),
   )
-  upload(
+  async upload(
     @Param() fileData: FileData,
     @Res() response: Response,
     @UploadedFile() file: Express.Multer.File,
-  ): object {
+  ): Promise<object> {
     if (file === undefined)
       throw new BadRequestException(
         "Campo arquivo com nome 'data' é obrigatório",
       );
 
-    // this.filesService.upload(fileData);
+    await this.filesService.upload(fileData);
 
     return response
       .status(HttpStatus.CREATED)
@@ -66,8 +66,11 @@ export class FilesController {
   }
 
   @Delete('/:folder/:fileName')
-  delete(@Param() fileData: FileData, @Res() response: Response): object {
-    this.filesService.delete(fileData);
+  async delete(
+    @Param() fileData: FileData,
+    @Res() response: Response,
+  ): Promise<object> {
+    await this.filesService.delete(fileData);
 
     return response
       .status(HttpStatus.OK)
