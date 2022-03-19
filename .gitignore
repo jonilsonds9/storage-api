@@ -38,3 +38,6 @@ storage-api.iml
 .env
 data/*
 !data/.gitkeep
+
+deploy.tar.gz
+ecosystem.config.js
