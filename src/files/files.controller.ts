@@ -16,7 +16,6 @@ import { FileData } from './file-data';
 import { FileDataInterceptor } from './file-data.interceptor';
 import { Response } from 'express';
 import { contentType } from 'mime-types';
-import { StorageConfig } from 'src/config/storage';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller()
@@ -29,11 +28,11 @@ export class FilesController {
   }
 
   @Get('/:folder/:fileName')
-  download(
+  async download(
     @Param() fileData: FileData,
     @Res({ passthrough: true }) response: Response,
-  ): StreamableFile {
-    const file = this.filesService.download(fileData);
+  ): Promise<StreamableFile> {
+    const file = await this.filesService.download(fileData);
     const contentTypeFile = contentType(fileData.fileName);
     response.set({
       'Content-Type': contentTypeFile,
@@ -44,9 +43,7 @@ export class FilesController {
   @Put('/:folder/:fileName')
   @UseInterceptors(
     FileDataInterceptor,
-    FileInterceptor('data', {
-      storage: StorageConfig.getStorage(),
-    }),
+    FileInterceptor('data'),
   )
   async upload(
     @Param() fileData: FileData,
@@ -58,7 +55,7 @@ export class FilesController {
         "Campo arquivo com nome 'data' é obrigatório",
       );
 
-    await this.filesService.upload(fileData);
+    await this.filesService.upload(fileData, file.buffer);
 
     return response
       .status(HttpStatus.CREATED)
