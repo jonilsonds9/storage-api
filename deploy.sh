@@ -24,34 +24,49 @@ function send_to_remote() {
 function remote_scripts() {
     log "[remote] Removendo pasta do projeto"
     rm -rf storage-api
+
     log "[remote] Atualizando pacotes"
     sudo apt update
+
     log "[remote] Instalando Nginx"
     sudo apt install nginx -y
+
     log "[remote] Instalando Nvm (Gerenciador de versões do Node)"
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+
     log "[remote] Fazendo reload das configurações do Usuário"
     source "$HOME"/.nvm/nvm.sh
+
     log "[remote] Instalando Node versão 16.14.0"
     nvm install 16.14.0 && nvm alias default 16.14.0
+
     log "[remote] Instalando pm2 globalmente"
     npm install pm2@5.2.0 -g
+
     log "[remote] Adicionando o pm2 no path para iniciar junto com sistema"
     sudo env PATH=$PATH:/home/ubuntu/.nvm/versions/node/v16.14.0/bin /home/ubuntu/.nvm/versions/node/v16.14.0/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
+
     log "[remote] Instalando CLI do NestJS globalmente"
     npm install @nestjs/cli@8.2.3 -g
+
     log "[remote] Criando pasta e extraindo arquivos"
     mkdir storage-api && tar -xf deploy.tar.gz -C storage-api && cd storage-api
+
     log "[remote] Instalando dependencias do package.json"
     npm install
+
     log "[remote] Iniciando aplicação em produção"
     pm2 start
+
     log "[remote] Salvando configurações do pm2 para quando ele reiniciar"
     pm2 save --force
+
     log "[remote] Copiando configuração do Nginx"
     sudo cp nginx.conf /etc/nginx/sites-available/default
+
     log "[remote] Reiniciando Nginx para aplicar alterações"
     sudo service nginx restart
+
     log "[remote] Removendo arquivo de deploy"
     cd .. && rm deploy.tar.gz
 }
