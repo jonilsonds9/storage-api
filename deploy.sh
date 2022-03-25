@@ -1,24 +1,25 @@
 #!/bin/bash
 set -e
 
-log() {
+function log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')]${*}"
 }
 
-function run_local() {
-  log "[local] Removendo arquivo 'deploy.tar.gz' se existir"
-  [ -e deploy.tar.gz ] && rm deploy.tar.gz
+function check_production_settings() {
+  log "[local] Verificando se o arquivo 'ecosystem.config.js' está configurado corretamente"
+  script="./check-prod-settings.js"
+  output=$("$script")
 
-  log "[local] Copiando arquivos necessários para a pasta 'dist'"
-  cp package*.json ecosystem.config.js nginx.conf dist
-
-  log "[local] Entrando na pasta 'dist' e gerando arquivo 'tar.gz'"
-  cd dist && tar czf ../deploy.tar.gz * && cd ..
+  if [ -n "$output" ]; then
+      echo "$output"
+      exit
+  fi
 }
 
-function send_to_remote() {
-  log "[local] Enviando arquivo para o host com IP: $2"
-  scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i "$1" deploy.tar.gz ubuntu@"$2":~/
+function send_production_settings() {
+  check_production_settings
+  log "[local] Enviando arquivo 'ecosystem.config.js' para o host com IP: $2"
+  scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i "$1" ecosystem.config.js ubuntu@"$2":~/
 }
 
 function remote_scripts() {
@@ -28,8 +29,8 @@ function remote_scripts() {
     log "[remote] Atualizando pacotes"
     sudo apt update
 
-    log "[remote] Instalando Nginx"
-    sudo apt install nginx -y
+    log "[remote] Instalando Nginx e Git"
+    sudo apt install nginx git -y
 
     log "[remote] Instalando Nvm (Gerenciador de versões do Node)"
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
@@ -49,11 +50,14 @@ function remote_scripts() {
     log "[remote] Instalando CLI do NestJS globalmente"
     npm install @nestjs/cli@8.2.3 -g
 
-    log "[remote] Criando pasta e extraindo arquivos"
-    mkdir storage-api && tar -xf deploy.tar.gz -C storage-api && cd storage-api
+    log "[remote] Fazendo clone do projeto"
+    git clone https://github.com/jonilsonds9/storage-api.git storage-api && cd storage-api
 
     log "[remote] Instalando dependencias do package.json"
     npm install
+
+    log "[remote] Fazendo build do projeto"
+    nest build
 
     log "[remote] Iniciando aplicação em produção"
     pm2 start
@@ -66,9 +70,6 @@ function remote_scripts() {
 
     log "[remote] Reiniciando Nginx para aplicar alterações"
     sudo service nginx restart
-
-    log "[remote] Removendo arquivo de deploy"
-    cd .. && rm deploy.tar.gz
 }
 
 function run_remote() {
@@ -85,8 +86,7 @@ do
     esac
 done
 
-run_local
-send_to_remote "$key" "$ip"
+send_production_settings "$key" "$ip"
 run_remote "$key" "$ip"
 
 
