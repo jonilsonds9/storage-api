@@ -59,6 +59,9 @@ function remote_scripts() {
     log "[remote] Fazendo build do projeto"
     nest build
 
+    log "[remote] Movendo configurações para dentro do projeto"
+    mv "$HOME"/ecosystem.config.js .
+
     log "[remote] Iniciando aplicação em produção"
     pm2 start
 
