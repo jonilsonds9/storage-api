@@ -40,4 +40,4 @@ data/*
 !data/.gitkeep
 
 deploy.tar.gz
-ecosystem.config.js
+ecosystem.config*.js
