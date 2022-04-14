@@ -29,8 +29,8 @@ function remote_scripts() {
     log "[remote] Atualizando pacotes"
     sudo apt update
 
-    log "[remote] Instalando Git"
-    sudo apt install git -y
+    log "[remote] Instalando Nginx e Git"
+    sudo apt install nginx git -y
 
     log "[remote] Instalando Nvm (Gerenciador de versões do Node)"
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
@@ -67,6 +67,12 @@ function remote_scripts() {
 
     log "[remote] Salvando configurações do pm2 para quando ele reiniciar"
     pm2 save --force
+
+    log "[remote] Copiando configuração do Nginx"
+    sudo cp nginx.conf /etc/nginx/sites-available/default
+
+    log "[remote] Reiniciando Nginx para aplicar alterações"
+    sudo service nginx restart
 }
 
 function run_remote() {
