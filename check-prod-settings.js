@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const rules = [
     {
-        variable: ['name', 'script', 'APP_PORT', 'DB_PORT', 'DB_USER', 'DB_DATABASE'],
+        variable: ['name', 'script', 'DB_PORT', 'DB_USER', 'DB_DATABASE'],
         validation: (value) => value.length > 1,
     },
     {
