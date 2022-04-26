@@ -1,34 +1,24 @@
-import { Injectable, NotFoundException, } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, } from '@nestjs/common';
 import { FileData } from './file-data';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { File } from '../entities/file.entity';
-import { config, S3 } from 'aws-sdk';
 import * as Buffer from 'buffer';
-import stream from 'node:stream';
+import { createReadStream, createWriteStream, existsSync, mkdirSync, ReadStream, unlinkSync } from 'fs';
 
 @Injectable()
 export class FilesService {
-  private s3: S3;
 
   constructor(
     @InjectRepository(File)
     private readonly filesRepository: Repository<File>,
-  ) {
-    config.update({
-      region: process.env.AWS_REGION,
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    });
-    this.s3 = new S3();
-  }
+  ) {}
 
   async upload(fileData: FileData, fileBuffer: Buffer): Promise<void> {
-    await this.s3.upload({
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Body: fileBuffer,
-      Key: `${fileData.folder}/${fileData.fileName}`
-    }).promise();
+    const fullPathWithFileName = this.createFolderTree(fileData);
+  
+    const writeStream = createWriteStream(fullPathWithFileName);
+    writeStream.write(fileBuffer);
 
     await this.filesRepository.save({ ...fileData });
   }
@@ -39,31 +29,44 @@ export class FilesService {
     });
     if (fileInfo == undefined) throw new NotFoundException();
     
-    const fullPathWithFileName = this.getFullPathIfFileExists(fileData);
-    await this.s3.deleteObject({
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: fullPathWithFileName
-    }).promise();
+    const fullPath = this.getFullPathIfFileExists(fileData);
+    try {
+      unlinkSync(fullPath);
+    } catch (error) {
+      throw new BadRequestException('Object delete failed');
+    }
 
     await this.filesRepository.delete(fileInfo.id)
   }
 
-  async download(fileData: FileData): Promise<stream.Readable> {
-    const fileInfo = await this.filesRepository.findOne({
-      where: { folder: fileData.folder, fileName: fileData.fileName },
-    });
-    if (fileInfo) {
-      const fullPathWithFileName = this.getFullPathIfFileExists(fileData);
-
-      return this.s3.getObject({
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: fullPathWithFileName,
-      }).createReadStream();
-    }
-    throw new NotFoundException();
+  download(fileData: FileData): ReadStream {
+    const fullPathWithFileName = this.getFullPathIfFileExists(fileData);
+    return createReadStream(fullPathWithFileName);
   }
 
   getFullPathIfFileExists(fileData: FileData): string {
-    return `${fileData.folder}/${fileData.fileName}`;
+    const fullPathWithFileName = this.getFullPathWithFileName(fileData);
+    
+    if (!existsSync(fullPathWithFileName)) {
+      throw new NotFoundException();
+    }
+    
+    return fullPathWithFileName;
+  }
+
+  private getFullPath(fileData: FileData): string {
+    return `${process.cwd()}/data/${fileData.folder}`;
+  }
+
+  private getFullPathWithFileName(fileData: FileData): string {
+    return `${this.getFullPath(fileData)}/${fileData.fileName}`;
+  }
+
+  private createFolderTree(data: FileData): string {
+    const fullPath = this.getFullPath(data);
+    
+    mkdirSync(fullPath, { recursive: true });
+    
+    return `${fullPath}/${data.fileName}`;
   }
 }

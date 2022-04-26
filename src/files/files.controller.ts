@@ -28,16 +28,17 @@ export class FilesController {
   }
 
   @Get('/:folder/:fileName')
-  async download(
+  download(
     @Param() fileData: FileData,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<StreamableFile> {
-    const file = await this.filesService.download(fileData);
-    const contentTypeFile = contentType(fileData.fileName);
+  ): StreamableFile {
+    const file = this.filesService.download(fileData);
+    const contentType1 = contentType(fileData.fileName);
     response.set({
-      'Content-Type': contentTypeFile,
+      'Content-Type': contentType1,
     });
-    return new StreamableFile(file);
+    const streamableFile = new StreamableFile(file);
+    return streamableFile;
   }
 
   @Put('/:folder/:fileName')
