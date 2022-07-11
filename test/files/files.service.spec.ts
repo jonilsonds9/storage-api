@@ -1,12 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { FilesService } from '../../src/files/files.service';
+import {Test, TestingModule} from '@nestjs/testing';
+import {FilesService} from '../../src/files/files.service';
 
 describe('FilesService', () => {
   let service: FilesService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [FilesService],
+      providers: [{
+        provide: FilesService,
+        useValue: {
+          upload: jest.fn()
+        }
+      }],
     }).compile();
 
     service = module.get<FilesService>(FilesService);
