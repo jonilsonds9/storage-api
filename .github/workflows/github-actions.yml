@@ -6,8 +6,8 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: Iniciando
-        run: echo "Iniciando com Actions"
+      - name: Checkout
+        uses: actions/checkout@v3
       
       - name: Listando arquivos
         run: ls -la
