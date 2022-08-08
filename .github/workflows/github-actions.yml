@@ -59,8 +59,27 @@ jobs:
       - name: Deploy homolog
         run: ./deploy/deploy-homolog.sh -b ${{ steps.branch-name.outputs.current_branch }} -i ${{ env.IP_HOMLOG }}
 
-      # - name: Adicionando URL de Homlog no PR
-      #   uses: blablacar/action-sticky-description@master
-      #   with:
-      #     issue_number: ${{ github.event_name == 'pull_request' && github.event.number }}
-      #     message: '> URL de Homlog: http://${{ env.IP_HOMLOG }}/${{ steps.branch-name.outputs.current_branch }}'
+      - name: Adicionando URL de Homlog no PR
+        uses: blablacar/action-sticky-description@master
+        with:
+          issue_number: ${{ github.event_name == 'pull_request' && github.event.number }}
+          message: '> URL de Homlog: http://${{ env.IP_HOMLOG }}/${{ steps.branch-name.outputs.current_branch }}'
+
+  prod:
+    if: github.ref_name == 'main'
+    needs: [build]
+    runs-on: ubuntu-22.04
+    env:
+      IP_PROD: 44.204.246.113
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS_PROD }}
+
+      - name: Deploy prod
+        run: ./deploy/deploy-prod.sh -i ${{ env.IP_PROD }}
