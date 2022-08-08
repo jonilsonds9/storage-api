@@ -59,11 +59,11 @@ jobs:
       - name: Deploy homolog
         run: ./deploy/deploy-homolog.sh -b ${{ steps.branch-name.outputs.current_branch }} -i ${{ env.IP_HOMLOG }}
 
-      # - name: Adicionando URL de Homlog no PR
-      #   uses: blablacar/action-sticky-description@master
-      #   with:
-      #     issue_number: ${{ github.event_name == 'pull_request' && github.event.number }}
-      #     message: '> URL de Homlog: http://${{ env.IP_HOMLOG }}/${{ steps.branch-name.outputs.current_branch }}'
+      - name: Adicionando URL de Homlog no PR
+        uses: blablacar/action-sticky-description@master
+        with:
+          issue_number: ${{ github.event_name == 'pull_request' && github.event.number }}
+          message: '> URL de Homlog: http://${{ env.IP_HOMLOG }}/${{ steps.branch-name.outputs.current_branch }}'
 
   prod:
     if: github.ref_name == 'main'
