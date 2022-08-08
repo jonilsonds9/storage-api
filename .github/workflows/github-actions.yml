@@ -29,3 +29,9 @@ jobs:
 
       - name: Rodando testes
         run: npm run test
+  
+  homolog:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Iniciando homolog
+        run: echo "Iniciando deploy em homolog"
