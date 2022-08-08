@@ -14,5 +14,11 @@ jobs:
         with:
           node-version: 16.16.0
       
-      - name: Visualizar a versão do Node
-        run: node -v
+      - name: Instalando dependecias
+        run: npm install
+
+      - name: Build do projeto
+        run: npm run build
+
+      - name: Rodando testes
+        run: npm run test
