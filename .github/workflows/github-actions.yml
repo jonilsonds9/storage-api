@@ -33,6 +33,23 @@ jobs:
   homolog:
     needs: [build]
     runs-on: ubuntu-22.04
+    env:
+      IP_HOMLOG: 54.236.32.229
     steps:
-      - name: Iniciando homolog
-        run: echo "Iniciando deploy em homolog"
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS_HOMOLOG }}
+      
+      - name: Pegar nome da branch
+        id: branch-name
+        uses: tj-actions/branch-names@v5.4
+      
+      - name: Deploy homolog
+        run: ./deploy/deploy-homolog.sh -b ${{ steps.branch-name.outputs.current_branch }} -i ${{ env.IP_HOMLOG }}
+
+      
